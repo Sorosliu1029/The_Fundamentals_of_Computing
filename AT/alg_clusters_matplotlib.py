@@ -25,7 +25,7 @@ def circle_area(pop):
     return math.pi * pop / (200.0 ** 2)
 
 
-def plot_clusters(data_table, cluster_list, draw_centers = False):
+def plot_clusters(data_table, cluster_list, draw_centers = True):
     """
     Create a plot of clusters of counties
     """
@@ -35,8 +35,9 @@ def plot_clusters(data_table, cluster_list, draw_centers = False):
         fips_to_line[data_table[line_idx][0]] = line_idx
      
     # Load map image
-    map_file = urllib2.urlopen(MAP_URL)
-    map_img = plt.imread(map_file)
+    # map_file = urllib2.urlopen(MAP_URL)
+    with open('USA_Counties.png') as map_file:
+        map_img = plt.imread(map_file)
 
     # Scale plot to get size similar to CodeSkulptor version
     ypixels, xpixels, bands = map_img.shape

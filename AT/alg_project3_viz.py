@@ -14,6 +14,9 @@ import math
 import random
 import urllib2
 import alg_cluster
+import time
+import app3_7
+import matplotlib.pyplot as plt
 
 # conditional imports
 if DESKTOP:
@@ -44,8 +47,9 @@ def load_data_table(data_url):
     Import a table of county-based cancer risk data
     from a csv format file
     """
-    data_file = urllib2.urlopen(data_url)
-    data = data_file.read()
+    # data_file = urllib2.urlopen(data_url)
+    with open(data_url) as data_file:
+        data = data_file.read()
     data_lines = data.split('\n')
     print "Loaded", len(data_lines), "data points"
     data_tokens = [line.split(',') for line in data_lines]
@@ -93,27 +97,60 @@ def run_example():
 
     Set DESKTOP = True/False to use either matplotlib or simplegui
     """
-    data_table = load_data_table(DATA_3108_URL)
+    data_table = load_data_table('unifiedCancerData_111.csv')
     
     singleton_list = []
     for line in data_table:
         singleton_list.append(alg_cluster.Cluster(set([line[0]]), line[1], line[2], line[3], line[4]))
         
-    cluster_list = sequential_clustering(singleton_list, 15)	
-    print "Displaying", len(cluster_list), "sequential clusters"
+    # cluster_list = sequential_clustering(singleton_list, 15)
+    # print "Displaying", len(cluster_list), "sequential clusters"
 
-    cluster_list = alg_project3_solution.hierarchical_clustering(singleton_list, 9)
-    print "Displaying", len(cluster_list), "hierarchical clusters"
+    # cluster_list = alg_project3_solution.hierarchical_clustering(singleton_list, 9)
+    # print 'hierarchical error', app3_7.compute_distortion(cluster_list, data_table)
+    # print "Displaying", len(cluster_list), "hierarchical clusters"
 
-    # cluster_list = alg_project3_solution.kmeans_clustering(singleton_list, 9, 5)
-    # print "Displaying", len(cluster_list), "k-means clusters"
+    cluster_list = alg_project3_solution.kmeans_clustering(singleton_list, 9, 5)
+    print 'k means error', app3_7.compute_distortion(cluster_list, data_table)
+    print "Displaying", len(cluster_list), "k-means clusters"
 
             
     # draw the clusters using matplotlib or simplegui
     if DESKTOP:
-        alg_clusters_matplotlib.plot_clusters(data_table, cluster_list, False)
-        #alg_clusters_matplotlib.plot_clusters(data_table, cluster_list, True)  #add cluster centers
+        # alg_clusters_matplotlib.plot_clusters(data_table, cluster_list, False)
+        alg_clusters_matplotlib.plot_clusters(data_table, cluster_list, True)  #add cluster centers
     else:
         alg_clusters_simplegui.PlotClusters(data_table, cluster_list)   # use toggle in GUI to add cluster centers
-    
-run_example()
+
+def compare_distortion():
+    # data_table = load_data_table('unifiedCancerData_111.csv')
+    # data_table = load_data_table('unifiedCancerData_290.csv')
+    data_table = load_data_table('unifiedCancerData_896.csv')
+    hie_distortion = []
+    kmeans_distortion = []
+    num_output = range(20, 5, -1)
+    singleton_list = []
+    for line in data_table:
+        singleton_list.append(alg_cluster.Cluster(set([line[0]]), line[1], line[2], line[3], line[4]))
+    hie_list = singleton_list[:]
+    for num_cluster in num_output:
+        hie_list = alg_project3_solution.hierarchical_clustering(hie_list, num_cluster)
+        hie_distortion.append(app3_7.compute_distortion(hie_list, data_table))
+        kmeans_list = alg_project3_solution.kmeans_clustering(singleton_list, num_cluster, 5)
+        kmeans_distortion.append(app3_7.compute_distortion(kmeans_list, data_table))
+    plt.plot(num_output, hie_distortion, '-b', label='hierarchical clustering')
+    plt.plot(num_output, kmeans_distortion, '-r', label='k-means clustering')
+    plt.legend(loc='upper right')
+    plt.xlabel('number of output clusters')
+    plt.ylabel('distortion of two clustering methods')
+    plt.title('Comparison of the Distortion with ' + str(len(singleton_list)) +
+              ' County Data Set')
+    plt.show()
+
+
+if __name__ == '__main__':
+    # start_time = time.time()
+    # run_example()
+    # end_time = time.time()
+    # print end_time - start_time
+    compare_distortion()
